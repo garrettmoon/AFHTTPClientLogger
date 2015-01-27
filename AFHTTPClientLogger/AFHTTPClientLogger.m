@@ -25,6 +25,17 @@
 
 #import <objc/runtime.h>
 
+#if FLLumberjackIntegrationEnabled && defined(FLLumberjackAvailable)
+// Global log level for the whole library, not per-file.
+const int ddLogLevel;
+#else
+#define DDLogError(...)   NSLog(__VA_ARGS__)
+#define DDLogWarn(...)    NSLog(__VA_ARGS__)
+#define DDLogInfo(...)    NSLog(__VA_ARGS__)
+#define DDLogDebug(...)   NSLog(__VA_ARGS__)
+#define DDLogVerbose(...) NSLog(__VA_ARGS__)
+#endif
+
 typedef NSString * (^AFHTTPClientLoggerFormatBlock)(AFHTTPRequestOperation *operation, AFHTTPClientLogLevel level);
 
 @interface AFHTTPClientLogger ()
@@ -78,7 +89,7 @@ typedef NSString * (^AFHTTPClientLoggerFormatBlock)(AFHTTPRequestOperation *oper
     if (self.requestStartFormatBlock) {
         NSString *formattedString = self.requestStartFormatBlock(operation, self.level);
         if (formattedString) {
-            NSLog(@"%@", formattedString);
+            DDLogError(@"%@", formattedString);
         }
         return;
     }
@@ -93,22 +104,22 @@ typedef NSString * (^AFHTTPClientLoggerFormatBlock)(AFHTTPRequestOperation *oper
     }
 
     switch (self.level) {
-        case AFHTTPClientLogLevelDebug:
-            if (body) {
-                NSLog(@">> %@ %@\n%@\n%@", [operation.request HTTPMethod], [[operation.request URL] absoluteString], [operation.request allHTTPHeaderFields], body);
-            } else {
-                NSLog(@">> %@ %@\n%@", [operation.request HTTPMethod], [[operation.request URL] absoluteString], [operation.request allHTTPHeaderFields]);
-            }
-            break;
         case AFHTTPClientLogLevelVerbose:
             if (body) {
-                NSLog(@">> %@ %@\n%@", [operation.request HTTPMethod], [[operation.request URL] absoluteString], body);
+                DDLogVerbose(@">> %@ %@\n%@\n%@", [operation.request HTTPMethod], [[operation.request URL] absoluteString], [operation.request allHTTPHeaderFields], body);
             } else {
-                NSLog(@">> %@ %@", [operation.request HTTPMethod], [[operation.request URL] absoluteString]);
+                DDLogVerbose(@">> %@ %@\n%@", [operation.request HTTPMethod], [[operation.request URL] absoluteString], [operation.request allHTTPHeaderFields]);
+            }
+            break;
+        case AFHTTPClientLogLevelDebug:
+            if (body) {
+                DDLogDebug(@">> %@ %@\n%@", [operation.request HTTPMethod], [[operation.request URL] absoluteString], body);
+            } else {
+                DDLogDebug(@">> %@ %@", [operation.request HTTPMethod], [[operation.request URL] absoluteString]);
             }
             break;
         case AFHTTPClientLogLevelInfo:
-            NSLog(@">> %@ %@", [operation.request HTTPMethod], [[operation.request URL] absoluteString]);
+            DDLogInfo(@">> %@ %@", [operation.request HTTPMethod], [[operation.request URL] absoluteString]);
             break;
         default:
             break;
@@ -124,7 +135,7 @@ typedef NSString * (^AFHTTPClientLoggerFormatBlock)(AFHTTPRequestOperation *oper
     if (self.requestFinishFormatBlock) {
         NSString *formattedString = self.requestFinishFormatBlock(operation, self.level);
         if (formattedString) {
-            NSLog(@"%@", formattedString);
+            DDLogError(@"%@", formattedString);
         }
         return;
     }
@@ -134,33 +145,33 @@ typedef NSString * (^AFHTTPClientLoggerFormatBlock)(AFHTTPRequestOperation *oper
 
     if (operation.error) {
         switch (self.level) {
-            case AFHTTPClientLogLevelDebug:
-                NSLog(@"!! %ld %@: %@", (long)[operation.response statusCode], [URL absoluteString], operation.error);
-                break;
             case AFHTTPClientLogLevelVerbose:
+                DDLogInfo(@"!! %ld %@: %@", (long)[operation.response statusCode], [URL absoluteString], operation.error);
+                break;
+            case AFHTTPClientLogLevelDebug:
             case AFHTTPClientLogLevelInfo:
             case AFHTTPClientLogLevelError:
-                NSLog(@"!! %ld %@: %@", (long)[operation.response statusCode], [URL absoluteString], [operation.error localizedDescription]);
+                DDLogError(@"!! %ld %@: %@", (long)[operation.response statusCode], [URL absoluteString], [operation.error localizedDescription]);
                 break;
         }
     } else {
         switch (self.level) {
-            case AFHTTPClientLogLevelDebug:
-                if (operation.responseString) {
-                    NSLog(@"<< %ld %@\n%@\n%@", (long)[operation.response statusCode], [URL absoluteString], [operation.response allHeaderFields], responseObject);
-                } else {
-                    NSLog(@"<< %ld %@\n%@", (long)[operation.response statusCode], [URL absoluteString], [operation.response allHeaderFields]);
-                }
-                break;
             case AFHTTPClientLogLevelVerbose:
                 if (operation.responseString) {
-                    NSLog(@"<< %ld %@\n%@", (long)[operation.response statusCode], [URL absoluteString], responseObject);
+                    DDLogVerbose(@"<< %ld %@\n%@\n%@", (long)[operation.response statusCode], [URL absoluteString], [operation.response allHeaderFields], responseObject);
                 } else {
-                    NSLog(@"<< %ld %@", (long)[operation.response statusCode], [URL absoluteString]);
+                    DDLogVerbose(@"<< %ld %@\n%@", (long)[operation.response statusCode], [URL absoluteString], [operation.response allHeaderFields]);
+                }
+                break;
+            case AFHTTPClientLogLevelDebug:
+                if (operation.responseString) {
+                    DDLogDebug(@"<< %ld %@\n%@", (long)[operation.response statusCode], [URL absoluteString], responseObject);
+                } else {
+                    DDLogDebug(@"<< %ld %@", (long)[operation.response statusCode], [URL absoluteString]);
                 }
                 break;
             case AFHTTPClientLogLevelInfo:
-                NSLog(@"<< %ld %@", (long)[operation.response statusCode], [URL absoluteString]);
+                DDLogInfo(@"<< %ld %@", (long)[operation.response statusCode], [URL absoluteString]);
                 break;
             default:
                 break;

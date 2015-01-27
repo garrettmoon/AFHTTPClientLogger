@@ -23,8 +23,8 @@
 #import "AFHTTPRequestOperationManager.h"
 
 typedef enum {
-    AFHTTPClientLogLevelDebug,
     AFHTTPClientLogLevelVerbose,
+    AFHTTPClientLogLevelDebug,
     AFHTTPClientLogLevelInfo,
     AFHTTPClientLogLevelError,
 } AFHTTPClientLogLevel;
