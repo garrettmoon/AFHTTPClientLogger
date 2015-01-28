@@ -25,7 +25,8 @@
 
 #import <objc/runtime.h>
 
-#if FLLumberjackIntegrationEnabled && defined(FLLumberjackAvailable)
+#if __has_include(<CocoaLumberjack/DDLog.h>)
+#import <CocoaLumberjack/DDLog.h>
 // Global log level for the whole library, not per-file.
 const int ddLogLevel;
 #else
